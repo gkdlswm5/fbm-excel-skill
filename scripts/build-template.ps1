@@ -266,6 +266,9 @@ try {
     $inputs.Cells.Item(3,2).Font.Italic = $true
     $inputs.Cells.Item(3,2).Font.Color = $charcoal
     $inputs.Cells.Item(3,2).Font.Size = 9
+    # Subtitle: wrap OFF so long sentences overflow right instead of inflating row height
+    $inputs.Cells.Item(3,2).WrapText = $false
+    $inputs.Cells.Item(3,2).HorizontalAlignment = -4131  # xlLeft
 
     # Header row
     $inputs.Range('B5:F5').Style = 'FBM Header'
@@ -300,7 +303,8 @@ try {
     $wb.Names.Add('Revenue_Input', "=Inputs!`$C`$6:`$F`$6") | Out-Null
     $wb.Names.Add('Growth_Rate', "=Inputs!`$C`$7:`$F`$7") | Out-Null
 
-    # Freeze panes at B6 (row 5 = header, column A gutter)
+    # Freeze panes: one row below header_row (5) and one col right of label_col (B) -> C6.
+    # When the header sits elsewhere, change the Select() target accordingly.
     $inputs.Activate()
     $inputs.Range('C6').Select()
     $excel.ActiveWindow.FreezePanes = $true

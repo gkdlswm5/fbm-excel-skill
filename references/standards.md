@@ -53,11 +53,11 @@ This document defines the visual and structural standards for all FBM Excel work
 - **Columns C onward:** data, default width = 15 (multiples of 5 — use 5, 10, 15, 20, 25)
 - **Row 1:** blank (top margin)
 - **Row 2:** sheet title (FBM Title style)
-- **Row 3:** optional subtitle / instruction (italic, charcoal)
-- **Row 5:** column headers (FBM Header style)
-- **Row 6+:** data
-- **Freeze panes:** at C6 (header row + label column locked)
-- **AutoFilter:** applied to header row on Inputs and tabular sheets
+- **Row 3:** optional subtitle / instruction (italic, charcoal). **Do not enable `Wrap Text` on the subtitle cell** — leave it single-line, left-aligned, and let long text overflow into the empty cells to the right. Wrapping a long sentence inside a 30-width label column balloons the row height and breaks the layout. If the message must wrap, merge the subtitle cell across the data columns (e.g. `B3:H3`) so it has horizontal room before turning wrap on.
+- **Row 5:** column headers (FBM Header style) — this is the default position, but the header row may sit lower (e.g. row 6 or 7) when extra subtitle/instruction rows are needed.
+- **Row 6+:** data (one row below the header row)
+- **Freeze panes:** computed dynamically from the actual layout — freeze one row *below* the header row and one column *right* of the rightmost label column. With the default layout (header in row 5, labels in column B only) this resolves to `C6`. If the header sits in row 7 and labels span `B:C`, freeze at `D8`. Never hardcode `C6` when the header is elsewhere.
+- **AutoFilter:** applied to the header row on Inputs and tabular sheets
 
 ---
 
@@ -176,7 +176,8 @@ Version suffixes: `v1`, `v2`, ... or initials (`ak`) for working copies. Date in
 - [ ] No hardcoded values inside formulas
 - [ ] Inputs are blue, formulas are black, cross-sheet links are green
 - [ ] Number formats applied (zeros as `-`, negatives in parens)
-- [ ] Freeze panes on data sheets at C6
+- [ ] Freeze panes on data sheets one row below header and one column right of last label column (default `C6`)
+- [ ] Subtitle / instruction rows have `Wrap Text` off (overflow right) — no abnormally tall rows
 - [ ] AutoFilter applied to header rows
 - [ ] Print setup: landscape + fit-to-page-wide + repeat row 5
 - [ ] Filename follows `FBM - [Subject] - [YYYY.MM.DD].xlsx`

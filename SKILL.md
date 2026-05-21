@@ -86,7 +86,8 @@ Negatives in parentheses (not minus). Zeros shown as `-`.
 
 ### Layout
 - Col A = 5 (gutter), Col B = 30 (labels), other cols = 15 default (all multiples of 5)
-- Row 2 = title, row 5 = headers, freeze at C6, autofilter on row 5
+- Row 2 = title, row 3 = optional subtitle (**wrap OFF — overflow right, don't inflate row height**), row 5 = headers (default), autofilter on header row
+- Freeze panes: dynamic — one row below the header row, one col right of the rightmost label column (default `C6`; never hardcode when the header isn't on row 5)
 - Sheet order: Cover → Inputs → Calc → Output → Reference
 
 ### File naming

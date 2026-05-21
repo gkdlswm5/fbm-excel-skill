@@ -181,13 +181,25 @@ def inject_fbm_styles(wb) -> None:
         number_format=FBM.FMT_YEAR))
 
 
-def apply_standard_layout(ws, header_row: int = 5, title_text: str = '') -> None:
+def apply_standard_layout(
+    ws,
+    header_row: int = 5,
+    title_text: str = '',
+    subtitle_text: str = '',
+    label_col: str = 'B',
+) -> None:
     """Apply standard FBM layout to a worksheet:
       - Col A = 5 (gutter)
       - Col B = 30 (labels)
       - Other cols = 15
       - Title in B2 with FBM Title style
-      - Freeze panes at C6
+      - Optional subtitle in B3 (italic charcoal, wrap OFF, overflow right)
+      - Freeze panes computed from header_row and label_col
+
+    Freeze pane is placed one row below header_row and one column right of
+    label_col. Defaults (header_row=5, label_col='B') resolve to C6. If the
+    header sits in row 7 and labels span B:C, pass label_col='C' to freeze
+    at D8.
     """
     ws.column_dimensions['A'].width = 5
     ws.column_dimensions['B'].width = 30
@@ -198,7 +210,41 @@ def apply_standard_layout(ws, header_row: int = 5, title_text: str = '') -> None
         ws['B2'] = title_text
         ws['B2'].style = 'FBM Title'
 
-    ws.freeze_panes = f'C{header_row + 1}'
+    if subtitle_text:
+        set_subtitle(ws, subtitle_text)
+
+    ws.freeze_panes = _freeze_anchor(header_row, label_col)
+
+
+def set_subtitle(ws, text: str, row: int = 3, col: str = 'B') -> None:
+    """Write an italic charcoal subtitle that does NOT wrap.
+
+    Wrapping a long sentence inside the 30-width label column inflates the
+    row height. This helper forces wrap_text=False and left alignment so
+    long text overflows into the empty cells to the right.
+    """
+    cell = ws[f'{col}{row}']
+    cell.value = text
+    cell.font = Font(
+        name=FBM.BODY_FONT_NAME,
+        size=FBM.BODY_FONT_SIZE,
+        italic=True,
+        color=_color(FBM.CHARCOAL),
+    )
+    cell.alignment = Alignment(horizontal='left', vertical='center', wrap_text=False)
+
+
+def _freeze_anchor(header_row: int, label_col: str) -> str:
+    """Return the freeze-pane anchor: one row below header, one col right of label_col."""
+    n = 0
+    for ch in label_col.upper():
+        n = n * 26 + (ord(ch) - ord('A') + 1)
+    n += 1
+    next_col = ''
+    while n > 0:
+        n, r = divmod(n - 1, 26)
+        next_col = chr(r + ord('A')) + next_col
+    return f'{next_col}{header_row + 1}'
 
 
 def set_tab_color(ws, role: str) -> None:
@@ -225,7 +271,11 @@ if __name__ == '__main__':
 
     ws = wb.active
     ws.title = 'Demo'
-    apply_standard_layout(ws, title_text='FBM Style Demo')
+    apply_standard_layout(
+        ws,
+        title_text='FBM Style Demo',
+        subtitle_text='One row per (RawData x matching rule). Long subtitles overflow right, they do not wrap.',
+    )
     set_tab_color(ws, 'output')
 
     # Header row
