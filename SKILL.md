@@ -14,6 +14,7 @@ This skill is **self-contained** — all resources are bundled inside the skill 
 | Path | Purpose |
 |---|---|
 | `references/standards.md` | Full standard: colors, fonts, number formats, conventions, checklist |
+| `references/roadmap.md` | Polish backlog (PR-A / PR-B / PR-C waves) &mdash; future-work, not yet shipped |
 | `assets/template.xlsx` | Working template with 15 pre-built cell styles, named ranges, example sheets |
 | `assets/fbm-logo.jpeg` | Official FBM logo for headers / cover sheets |
 | `scripts/build-template.ps1` | Source script that generated the template (Windows + Excel COM, for reference) |
@@ -83,6 +84,12 @@ Blue → Inputs · Green → Outputs · Gray → Reference · Navy → Cover
 | Year | text `@`, centered |
 
 Negatives in parentheses (not minus). Zeros shown as `-`.
+
+### Sign convention — "positive good, negative bad"
+Variance / delta columns: construct the formula so favorable = positive, unfavorable = negative.
+- Revenue, profit, margin: `Actual - Plan`
+- Cost, OpEx, headcount, DSO, churn: `Plan - Actual` (or `Prior - Current` for time-based)
+- Header columns: name them `Fav/(Unfav) vs Plan`. See §4.2 of `references/standards.md`.
 
 ### Layout
 - Col A = 5 (gutter), Col B = 30 (labels), other cols = 15 default (all multiples of 5)

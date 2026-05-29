@@ -79,6 +79,8 @@ This document defines the visual and structural standards for all FBM Excel work
 
 **Parentheses, not minus signs.** All standard number formats above include `(...)` for negatives. Red text is reserved for external links only — don't use red for negative numbers.
 
+Note: this rule is about *display*. The rule about whether a value should *be* negative — the "positive good, negative bad" convention for variance formulas — lives in &sect;4.2.
+
 ### 3.3 Zeros
 
 Display zeros as `-` (dash) via the number format. Always include `;"-"` in the third format section. This applies to percentages too.
@@ -135,7 +137,30 @@ Apply via icon sets, color scales, or direct conditional formats. The template's
 - **Document hardcoded source values** in a cell comment or adjacent cell:
   Format: `Source: [System/Document], [Date], [Reference/URL]`
 
-### 4.2 Pivot tables
+### 4.2 Sign convention &mdash; "positive good, negative bad"
+
+FBM rule: in every variance, delta, change, or "vs" column, the formula MUST be constructed so a **positive number is a favorable outcome** and a **negative number is unfavorable**. The reader should never have to think "is + good or bad here?" &mdash; it is always good.
+
+The direction of subtraction depends on whether *higher* or *lower* is favorable for that metric.
+
+| Metric | Higher is | Variance formula | Example: `+$1M` means |
+|---|---|---|---|
+| Revenue, gross profit, EBITDA, cash | better | `Actual - Plan` | Beat plan by $1M (good) |
+| COGS, OpEx, SG&A, interest expense | worse | `Plan - Actual` | Spent $1M less than plan (good) |
+| Headcount (cost view) | worse | `Plan - Actual` | Under plan by 1 head (good) |
+| DSO, DPO, inventory days, cycle time | worse | `Prior - Current` | Improved by 1 day (good) |
+| Margin %, ROIC, conversion % | better | `Actual - Plan` | Above plan by N bps (good) |
+| Churn %, defect rate, returns % | worse | `Plan - Actual` | Below plan by N bps (good) |
+
+This convention pairs with:
+
+- **Number format** &mdash; use the forced-sign variance format on variance columns: `+#,##0;(#,##0);"-"` (or `+0.0%;(0.0%);"-"` for percent variances, `+0" bps";(0)" bps";"-"` for bps deltas).
+- **Conditional formatting** (&sect;3.5) &mdash; green = positive = good, red = negative = bad. With the sign convention enforced, the good/neutral/bad palette can be applied to any variance column without metric-specific logic.
+- **Column header** &mdash; name variance columns `Fav/(Unfav) vs Plan`, `Fav/(Unfav) YoY`, or `Δ Fav/(Unfav)` so the convention is explicit to the reader.
+
+For non-obvious cases (cost variances especially), document the subtraction direction in column B or as a cell comment, e.g. `COGS variance = Plan - Actual (under = favorable)`.
+
+### 4.3 Pivot tables
 
 Pivot tables must survive a refresh without losing the visual layout the analyst set up.
 
@@ -151,7 +176,7 @@ Set via:
 | Excel COM (PowerShell / VBA) | `$pt.HasAutoFormat = $false; $pt.PreserveFormatting = $true` |
 | openpyxl | `pivot.useAutoFormatting = False; pivot.preserveFormatting = True` (helper: `apply_styles.disable_pivot_autofit(wb)`) |
 
-### 4.3 Print setup
+### 4.4 Print setup
 
 | Setting | Value |
 |---|---|
@@ -162,7 +187,7 @@ Set via:
 | Footer | Left: `&F` (file path); Center: `&D` (date); Right: `&P of &N` (page) |
 | Repeat rows | `$5:$5` (header row on every page) |
 
-### 4.4 File naming convention
+### 4.5 File naming convention
 
 Format: `FBM - [Subject] - [YYYY.MM.DD].xlsx`
 
@@ -173,7 +198,7 @@ Examples:
 
 Version suffixes: `v1`, `v2`, ... or initials (`ak`) for working copies. Date in filename always reflects the data as-of date, not the save date.
 
-### 4.5 Workbook hygiene
+### 4.6 Workbook hygiene
 
 - Cover sheet metadata filled in (author, date, version, purpose)
 - No leftover scratch sheets named `Sheet1`, `Test`, etc.
@@ -195,6 +220,7 @@ Version suffixes: `v1`, `v2`, ... or initials (`ak`) for working copies. Date in
 - [ ] Freeze panes on data sheets one row below header and one column right of last label column (default `C6`)
 - [ ] Subtitle / instruction rows have `Wrap Text` off (overflow right) — no abnormally tall rows
 - [ ] All pivot tables have "Autofit column widths on update" OFF and "Preserve cell formatting on update" ON
+- [ ] Variance columns follow "positive good, negative bad" — subtraction direction set per metric (revenue: Actual-Plan; cost: Plan-Actual)
 - [ ] AutoFilter applied to header rows
 - [ ] Print setup: landscape + fit-to-page-wide + repeat row 5
 - [ ] Filename follows `FBM - [Subject] - [YYYY.MM.DD].xlsx`
