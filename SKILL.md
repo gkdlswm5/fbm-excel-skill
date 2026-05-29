@@ -15,7 +15,7 @@ This skill is **self-contained** — all resources are bundled inside the skill 
 |---|---|
 | `references/standards.md` | Full standard: colors, fonts, number formats, conventions, checklist |
 | `references/roadmap.md` | Polish backlog (PR-A / PR-B / PR-C waves) &mdash; future-work, not yet shipped |
-| `assets/template.xlsx` | Working template with 25 pre-built cell styles, named ranges, example sheets (Cover, Inputs, Calc, Output, Reference). **Note:** v1.2 binary not yet regenerated &mdash; run `scripts/build-template.ps1` on Windows to refresh. |
+| `assets/template.xlsx` | Working template with 24 pre-built cell styles, named ranges, example sheets (Cover, Inputs, Calc, Output, Reference). Regenerated as of v1.3. |
 | `assets/fbm-logo.jpeg` | Official FBM logo for headers / cover sheets |
 | `scripts/build-template.ps1` | Source script that generated the template (Windows + Excel COM, for reference) |
 | `scripts/apply_styles.py` | Cross-platform openpyxl helper to inject FBM styles into any workbook |
@@ -64,7 +64,7 @@ Colors have **locked roles** &mdash; see &sect;1.1.1 of `standards.md`. Don't in
 ### Fonts
 - Headers/titles: **Rockwell** (Calibri Bold fallback)
 - Body: **Calibri 9**
-- Bold headers: **Calibri 11 bold**
+- Bold headers: **Calibri 10 bold**
 
 ### Tab colors
 Blue → Inputs · Green → Outputs · Gray → Reference · Navy → Cover
@@ -103,13 +103,13 @@ Variance / delta columns: construct the formula so favorable = positive, unfavor
 
 ### Layout
 - Col A = 5 (gutter), Col B = 30 (labels), other cols = 15 default (all multiples of 5)
-- Row 2 = title (24pt), row 3 = optional subtitle (**wrap OFF — overflow right**), row 4 = optional units row (italic charcoal centered: `$ thousands` / `%` / `bps` / `units`), row 5 = headers (30pt), data rows = 16pt, autofilter on header row
-- Locked row heights: title 24, subtitle/units 16, header 30, data 16, blank-above-total 8 pt
+- Row 2 = title (24pt), row 3 = optional subtitle (**wrap OFF — overflow right**), row 4 = optional units row (italic charcoal centered: `$ thousands` / `%` / `bps` / `units`), row 5 = headers (18pt), data rows = 16pt, autofilter on header row
+- Locked row heights: title 24, subtitle/units 16, header 18, data 16, blank-above-total 8 pt
 - Sub-items indent via `Alignment(indent=N)`, never leading spaces
 - Banding: `#F7F7F7` fill on alternating data rows via CF `=MOD(ROW(),2)=0`
 - Gridlines OFF on Cover and Output; ON for Inputs/Calc/Reference
 - Header / label alignment: labels left, numeric headers right, text headers center
-- Freeze panes: dynamic — one row below the header row, one col right of the rightmost label column (default `C6`; never hardcode when the header isn't on row 5)
+- Freeze panes: dynamic — one row below the header row, one col right of the rightmost label column (default `C6`; never hardcode when the header isn't on row 5). For wide tables where columns should scroll freely, call `apply_standard_layout(..., label_col=None)` to freeze rows only (anchor at column A).
 - Sheet order: Cover → Inputs → Calc → Output → Reference
 
 ### Pivot tables

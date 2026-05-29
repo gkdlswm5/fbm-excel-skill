@@ -1,8 +1,11 @@
 # Build FBM Excel formatting standard template
 $ErrorActionPreference = 'Stop'
 
-$outPath = 'C:\ak\fbm-standards\FBM-Excel-Template.xlsx'
-$logoPath = 'C:\ak\fbm-standards\fbm-logo.jpeg'
+# Path-independent: resolve from this script's location so it works whether
+# the repo lives in C:\ak, gkd\forks, or anywhere else.
+$repoRoot = Split-Path -Parent $PSScriptRoot
+$outPath  = Join-Path $repoRoot 'assets\template.xlsx'
+$logoPath = Join-Path $repoRoot 'assets\fbm-logo.jpeg'
 if (Test-Path $outPath) { Remove-Item $outPath -Force }
 
 # Brand colors (BGR for Excel.Interior.Color: 0xBBGGRR)
@@ -128,7 +131,7 @@ try {
 
     # Header (navy fill, white bold)
     Set-Style 'FBM Header' { param($s)
-        $s.Font.Name='Calibri'; $s.Font.Size=11; $s.Font.Bold=$true; $s.Font.Color=$white
+        $s.Font.Name='Calibri'; $s.Font.Size=10; $s.Font.Bold=$true; $s.Font.Color=$white
         $s.Interior.Color=$navy
         $s.HorizontalAlignment = -4108  # xlCenter
         $s.VerticalAlignment = -4108
@@ -240,7 +243,7 @@ try {
         $ws.Rows.Item(2).RowHeight = 24
         if ($hasSubtitle) { $ws.Rows.Item(3).RowHeight = 16 }
         if ($hasUnits)    { $ws.Rows.Item(4).RowHeight = 16 }
-        $ws.Rows.Item($headerRow).RowHeight = 30
+        $ws.Rows.Item($headerRow).RowHeight = 18
         for ($r = $headerRow + 1; $r -le $headerRow + 20; $r++) {
             $ws.Rows.Item($r).RowHeight = 16
         }
@@ -415,10 +418,11 @@ try {
     $inputs.Cells.Item(3,2) = 'Blue text cells are user-editable. Do not overwrite black formula cells.'
     $inputs.Cells.Item(3,2).Style = 'FBM Subtitle'
 
-    # Units row (centered italic charcoal)
+    # Units row (centered italic charcoal). Apply style BEFORE merge —
+    # after merging, PowerShell COM can't bind Style on Cells.Item(...).
+    $inputs.Range('C4:F4').Style = 'FBM Units'
     $inputs.Range('C4:F4').Merge()
     $inputs.Cells.Item(4,3) = "$reportingScale ($reportingCcy)"
-    $inputs.Cells.Item(4,3).Style = 'FBM Units'
 
     # Header row
     $inputs.Range('B5:F5').Style = 'FBM Header'
@@ -494,10 +498,10 @@ try {
     $calc.Cells.Item(2,2) = 'Calculations'
     $calc.Cells.Item(2,2).Style = 'FBM Title'
 
-    # Units row
+    # Units row (style before merge — see Inputs sheet for rationale)
+    $calc.Range('C4:F4').Style = 'FBM Units'
     $calc.Range('C4:F4').Merge()
     $calc.Cells.Item(4,3) = "$reportingScale ($reportingCcy)"
-    $calc.Cells.Item(4,3).Style = 'FBM Units'
 
     $calc.Range('B5:F5').Style = 'FBM Header'
     $calc.Cells.Item(5,2)='Metric'
@@ -608,9 +612,10 @@ try {
     $output.Rows.Item(5).RowHeight = 16
     $output.Rows.Item(6).RowHeight = 8  # blank breathing-room above table
 
+    # Units row (style before merge — see Inputs sheet for rationale)
+    $output.Range('C7:F7').Style = 'FBM Units'
     $output.Range('C7:F7').Merge()
     $output.Cells.Item(7,3) = "$reportingScale ($reportingCcy)"
-    $output.Cells.Item(7,3).Style = 'FBM Units'
 
     $output.Range('B8:F8').Style = 'FBM Header'
     $output.Cells.Item(8,2)='KPI'
@@ -735,12 +740,20 @@ try {
     # ============================================
     # WORKBOOK PROPERTIES (File -> Info -> Properties)
     # ============================================
-    $wb.BuiltinDocumentProperties.Item('Title')    = $workbookTitle
-    $wb.BuiltinDocumentProperties.Item('Subject')  = $workbookSubject
-    $wb.BuiltinDocumentProperties.Item('Author')   = $workbookAuthor
-    $wb.BuiltinDocumentProperties.Item('Company')  = $workbookCompany
-    $wb.BuiltinDocumentProperties.Item('Category') = $workbookCategory
-    try { $wb.BuiltinDocumentProperties.Item('Last Author') = $workbookAuthor } catch {}
+    # BuiltinDocumentProperties.Item(name) returns a DocumentProperty object;
+    # assign to its .Value. For unsaved workbooks some items may be null until
+    # the first save, so each assignment is wrapped in try/catch — the script
+    # writes the workbook to disk further down and properties get persisted
+    # then via $wb.Title/Subject too if needed.
+    function Set-DocProp { param($name, $value)
+        try { $wb.BuiltinDocumentProperties.Item($name).Value = $value } catch {}
+    }
+    Set-DocProp 'Title'        $workbookTitle
+    Set-DocProp 'Subject'      $workbookSubject
+    Set-DocProp 'Author'       $workbookAuthor
+    Set-DocProp 'Company'      $workbookCompany
+    Set-DocProp 'Category'     $workbookCategory
+    Set-DocProp 'Last Author'  $workbookAuthor
 
     # Make Cover the active sheet on open and hide gridlines on Cover
     $cover.Activate()
