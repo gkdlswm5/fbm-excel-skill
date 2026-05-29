@@ -135,7 +135,23 @@ Apply via icon sets, color scales, or direct conditional formats. The template's
 - **Document hardcoded source values** in a cell comment or adjacent cell:
   Format: `Source: [System/Document], [Date], [Reference/URL]`
 
-### 4.2 Print setup
+### 4.2 Pivot tables
+
+Pivot tables must survive a refresh without losing the visual layout the analyst set up.
+
+- **Disable "Autofit column widths on update"** so column widths set per section 2.2 (label col = 30, data cols = 15) aren't blown away on every refresh.
+- **Enable "Preserve cell formatting on update"** so manual fonts, borders, and number formats stick across refreshes.
+- Apply these to every pivot in the workbook, not just the first one.
+
+Set via:
+
+| Surface | Setting |
+|---|---|
+| Excel UI | PivotTable Analyze &rarr; Options &rarr; Layout & Format &rarr; uncheck *Autofit column widths on update*, check *Preserve cell formatting on update* |
+| Excel COM (PowerShell / VBA) | `$pt.HasAutoFormat = $false; $pt.PreserveFormatting = $true` |
+| openpyxl | `pivot.useAutoFormatting = False; pivot.preserveFormatting = True` (helper: `apply_styles.disable_pivot_autofit(wb)`) |
+
+### 4.3 Print setup
 
 | Setting | Value |
 |---|---|
@@ -146,7 +162,7 @@ Apply via icon sets, color scales, or direct conditional formats. The template's
 | Footer | Left: `&F` (file path); Center: `&D` (date); Right: `&P of &N` (page) |
 | Repeat rows | `$5:$5` (header row on every page) |
 
-### 4.3 File naming convention
+### 4.4 File naming convention
 
 Format: `FBM - [Subject] - [YYYY.MM.DD].xlsx`
 
@@ -157,7 +173,7 @@ Examples:
 
 Version suffixes: `v1`, `v2`, ... or initials (`ak`) for working copies. Date in filename always reflects the data as-of date, not the save date.
 
-### 4.4 Workbook hygiene
+### 4.5 Workbook hygiene
 
 - Cover sheet metadata filled in (author, date, version, purpose)
 - No leftover scratch sheets named `Sheet1`, `Test`, etc.
@@ -178,6 +194,7 @@ Version suffixes: `v1`, `v2`, ... or initials (`ak`) for working copies. Date in
 - [ ] Number formats applied (zeros as `-`, negatives in parens)
 - [ ] Freeze panes on data sheets one row below header and one column right of last label column (default `C6`)
 - [ ] Subtitle / instruction rows have `Wrap Text` off (overflow right) — no abnormally tall rows
+- [ ] All pivot tables have "Autofit column widths on update" OFF and "Preserve cell formatting on update" ON
 - [ ] AutoFilter applied to header rows
 - [ ] Print setup: landscape + fit-to-page-wide + repeat row 5
 - [ ] Filename follows `FBM - [Subject] - [YYYY.MM.DD].xlsx`

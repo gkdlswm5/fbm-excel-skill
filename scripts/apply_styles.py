@@ -234,6 +234,25 @@ def set_subtitle(ws, text: str, row: int = 3, col: str = 'B') -> None:
     cell.alignment = Alignment(horizontal='left', vertical='center', wrap_text=False)
 
 
+def disable_pivot_autofit(wb) -> int:
+    """For every pivot table in the workbook: disable autofit-on-refresh and
+    enable preserve-formatting-on-refresh.
+
+    Maps to the PivotTable Options checkboxes:
+      - "Autofit column widths on update" -> OFF (useAutoFormatting=False)
+      - "Preserve cell formatting on update" -> ON (preserveFormatting=True)
+
+    Returns the count of pivot tables touched.
+    """
+    count = 0
+    for ws in wb.worksheets:
+        for pivot in getattr(ws, '_pivots', []):
+            pivot.useAutoFormatting = False
+            pivot.preserveFormatting = True
+            count += 1
+    return count
+
+
 def _freeze_anchor(header_row: int, label_col: str) -> str:
     """Return the freeze-pane anchor: one row below header, one col right of label_col."""
     n = 0

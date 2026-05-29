@@ -90,6 +90,11 @@ Negatives in parentheses (not minus). Zeros shown as `-`.
 - Freeze panes: dynamic — one row below the header row, one col right of the rightmost label column (default `C6`; never hardcode when the header isn't on row 5)
 - Sheet order: Cover → Inputs → Calc → Output → Reference
 
+### Pivot tables
+- "Autofit column widths on update" **OFF**, "Preserve cell formatting on update" **ON** — applies to every pivot in the workbook.
+- COM: `$pt.HasAutoFormat=$false; $pt.PreserveFormatting=$true`
+- openpyxl: `apply_styles.disable_pivot_autofit(wb)`
+
 ### File naming
 `FBM - [Subject] - [YYYY.MM.DD].xlsx`
 
