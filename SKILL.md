@@ -117,6 +117,12 @@ Variance / delta columns: construct the formula so favorable = positive, unfavor
 - COM: `$pt.HasAutoFormat=$false; $pt.PreserveFormatting=$true`
 - openpyxl: `apply_styles.disable_pivot_autofit(wb)`
 
+### Auto-style formula cells
+Retroactively apply the black-text formula convention across an imported workbook:
+- `apply_styles.autostyle_formulas(ws, cell_range=None)` — every formula cell in the range (or sheet) gets `FBM Formula` / `Formula $` / `Formula %` based on its existing number format.
+- `apply_styles.autostyle_formulas_wb(wb)` — same across every sheet.
+- Cells that already carry an `FBM ...` style (Total, Link, External, Assumption) are left alone unless `overwrite=True`.
+
 ### File naming
 `FBM - [Subject] - [YYYY.MM.DD].xlsx`
 

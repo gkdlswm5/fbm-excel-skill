@@ -384,6 +384,61 @@ def hide_gridlines(ws) -> None:
     ws.sheet_view.showGridLines = False
 
 
+def autostyle_formulas(ws, cell_range: str | None = None, overwrite: bool = False) -> int:
+    """Apply FBM Formula / Formula $ / Formula % to every formula cell.
+
+    Walks `cell_range` (or the entire sheet if None) and, for any cell whose
+    value is a formula (string starting with '='), assigns the matching FBM
+    formula style. The $/%/plain variant is picked from the cell's existing
+    number_format:
+      - format contains '%' -> FBM Formula %
+      - format contains '$' -> FBM Formula $
+      - otherwise           -> FBM Formula
+
+    Cells that already carry an FBM-prefixed style (e.g. FBM Total, FBM Link,
+    FBM External, FBM Assumption) are left alone so their borders / colors
+    survive. Pass overwrite=True to force-restyle even those.
+
+    Useful for retroactively standardizing an imported workbook so every
+    calculated value carries the black-text convention per standards.md 3.4.
+
+    Returns the count of cells styled.
+    """
+    if cell_range:
+        rows = ws[cell_range]
+        if rows and not isinstance(rows[0], tuple):
+            rows = (rows,)
+    else:
+        rows = ws.iter_rows()
+
+    count = 0
+    for row in rows:
+        for cell in row:
+            val = cell.value
+            if not isinstance(val, str) or not val.startswith('='):
+                continue
+            if not overwrite:
+                existing = cell.style if isinstance(cell.style, str) else ''
+                if existing.startswith('FBM '):
+                    continue
+            fmt = cell.number_format or ''
+            if '%' in fmt:
+                cell.style = 'FBM Formula %'
+            elif '$' in fmt:
+                cell.style = 'FBM Formula $'
+            else:
+                cell.style = 'FBM Formula'
+            count += 1
+    return count
+
+
+def autostyle_formulas_wb(wb, overwrite: bool = False) -> int:
+    """Apply autostyle_formulas across every sheet in the workbook.
+    Returns the total count of cells styled.
+    """
+    return sum(autostyle_formulas(ws, overwrite=overwrite) for ws in wb.worksheets)
+
+
 def disable_pivot_autofit(wb) -> int:
     """For every pivot table in the workbook: disable autofit-on-refresh and
     enable preserve-formatting-on-refresh.
@@ -513,6 +568,18 @@ if __name__ == '__main__':
 
     # KPI card
     apply_kpi_card(ws, 'H6', 'H7', 23.5, 'Gross Margin %')
+
+    # Sample formula row to exercise autostyle_formulas
+    ws['B10'] = 'Growth %'
+    ws['D10'] = '=D6/C6-1'
+    ws['D10'].number_format = FBM.FMT_PERCENT
+    ws['E10'] = '=E6/D6-1'
+    ws['E10'].number_format = FBM.FMT_PERCENT
+    ws['F10'] = '=F6-E6'
+    ws['F10'].number_format = FBM.FMT_CURRENCY
+
+    n = autostyle_formulas_wb(wb)
+    print(f'autostyled {n} formula cells')
 
     wb.save('fbm_demo.xlsx')
     print('Saved fbm_demo.xlsx')
