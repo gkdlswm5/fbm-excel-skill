@@ -15,7 +15,7 @@ This skill is **self-contained** — all resources are bundled inside the skill 
 |---|---|
 | `references/standards.md` | Full standard: colors, fonts, number formats, conventions, checklist |
 | `references/roadmap.md` | Polish backlog (PR-A / PR-B / PR-C waves) &mdash; future-work, not yet shipped |
-| `assets/template.xlsx` | Working template with 15 pre-built cell styles, named ranges, example sheets |
+| `assets/template.xlsx` | Working template with 25 pre-built cell styles, named ranges, example sheets (Cover, Inputs, Calc, Output, Reference). **Note:** v1.2 binary not yet regenerated &mdash; run `scripts/build-template.ps1` on Windows to refresh. |
 | `assets/fbm-logo.jpeg` | Official FBM logo for headers / cover sheets |
 | `scripts/build-template.ps1` | Source script that generated the template (Windows + Excel COM, for reference) |
 | `scripts/apply_styles.py` | Cross-platform openpyxl helper to inject FBM styles into any workbook |
@@ -57,6 +57,9 @@ Run the checklist in section 5 of `references/standards.md`. Non-negotiables: ze
 | Forest green | `#005E34` |
 | Sage | `#708573` |
 | Light grey | `#E7E6E6` |
+| Banding grey | `#F7F7F7` |
+
+Colors have **locked roles** &mdash; see &sect;1.1.1 of `standards.md`. Don't introduce ad-hoc colors.
 
 ### Fonts
 - Headers/titles: **Rockwell** (Calibri Bold fallback)
@@ -82,8 +85,15 @@ Blue → Inputs · Green → Outputs · Gray → Reference · Navy → Cover
 | Multiple | `0.0"x"` |
 | Date | `mm/dd/yyyy` |
 | Year | text `@`, centered |
+| Variance ($) | `+$#,##0;($#,##0);"-"` |
+| Variance (#) | `+#,##0;(#,##0);"-"` |
+| Variance (%) | `+0.0%;(0.0%);"-"` |
+| Variance (bps) | `+0" bps";(0)" bps";"-"` |
+| Ratio | `0.00` |
+| Bps | `0" bps"` |
+| Share price | `$#,##0.00` |
 
-Negatives in parentheses (not minus). Zeros shown as `-`.
+Negatives in parentheses (not minus). Zeros shown as `-`. `n/a` cells use the literal string `n/a` (not blank, not zero).
 
 ### Sign convention — "positive good, negative bad"
 Variance / delta columns: construct the formula so favorable = positive, unfavorable = negative.
@@ -93,7 +103,12 @@ Variance / delta columns: construct the formula so favorable = positive, unfavor
 
 ### Layout
 - Col A = 5 (gutter), Col B = 30 (labels), other cols = 15 default (all multiples of 5)
-- Row 2 = title, row 3 = optional subtitle (**wrap OFF — overflow right, don't inflate row height**), row 5 = headers (default), autofilter on header row
+- Row 2 = title (24pt), row 3 = optional subtitle (**wrap OFF — overflow right**), row 4 = optional units row (italic charcoal centered: `$ thousands` / `%` / `bps` / `units`), row 5 = headers (30pt), data rows = 16pt, autofilter on header row
+- Locked row heights: title 24, subtitle/units 16, header 30, data 16, blank-above-total 8 pt
+- Sub-items indent via `Alignment(indent=N)`, never leading spaces
+- Banding: `#F7F7F7` fill on alternating data rows via CF `=MOD(ROW(),2)=0`
+- Gridlines OFF on Cover and Output; ON for Inputs/Calc/Reference
+- Header / label alignment: labels left, numeric headers right, text headers center
 - Freeze panes: dynamic — one row below the header row, one col right of the rightmost label column (default `C6`; never hardcode when the header isn't on row 5)
 - Sheet order: Cover → Inputs → Calc → Output → Reference
 
@@ -109,17 +124,23 @@ Variance / delta columns: construct the formula so favorable = positive, unfavor
 
 | Style | Purpose |
 |---|---|
-| FBM Title | 14pt Rockwell, navy — sheet titles |
-| FBM Header | Navy fill, white bold, centered — header row |
+| FBM Title | 14pt Rockwell, navy &mdash; sheet titles |
+| FBM Subtitle | 9pt italic charcoal, no wrap &mdash; row 3 |
+| FBM Units | 9pt italic charcoal, centered &mdash; row 4 (`$ thousands`, `%`, `bps`, etc.) |
+| FBM Header | Navy fill, white bold, centered &mdash; header row |
 | FBM Subheader | Light grey fill, navy bold |
-| FBM Input / Input $ / Input % | Blue text — hardcoded inputs |
-| FBM Formula / Formula $ / Formula % | Black text — calculated values |
-| FBM Link | Green text — cross-sheet links |
-| FBM External | Red text — external file links |
-| FBM Assumption | Yellow fill, blue bold — key assumption |
+| FBM Input / Input $ / Input % | Blue text &mdash; hardcoded inputs |
+| FBM Formula / Formula $ / Formula % | Black text &mdash; calculated values |
+| FBM Variance / Variance $ / Variance % / Variance bps | Forced-sign variance formats &mdash; pair with &sect;4.2 sign convention |
+| FBM Link | Green text &mdash; cross-sheet links |
+| FBM External | Red text &mdash; external file links |
+| FBM Assumption | Yellow fill, blue bold &mdash; key assumption |
 | FBM Total | Top single + bottom double border, bold |
 | FBM Date | mm/dd/yyyy |
 | FBM Year | Text format, centered |
+| FBM Band | Banding grey fill (`#F7F7F7`) &mdash; alternating data rows |
+| FBM KPI Big | 24pt Rockwell bold navy, centered |
+| FBM KPI Label | 9pt italic charcoal, centered |
 
 ## Implementation
 
@@ -136,7 +157,7 @@ from apply_styles import inject_fbm_styles, FBM
 from openpyxl import load_workbook
 wb = load_workbook('target.xlsx')
 
-# Inject all 15 FBM named styles
+# Inject all FBM named styles (25 in v1.2)
 inject_fbm_styles(wb)
 
 # Apply styles by name

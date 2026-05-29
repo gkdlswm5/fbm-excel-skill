@@ -2,16 +2,20 @@
 
 **Owner:** Andrew Kim &middot; Operations FP&A &middot; Last updated: 2026-05-29
 
-This document lists recommended improvements to bring FBM workbooks to an S&P 500 / investor-relations level of polish. The current `standards.md` is v1.0; these items are queued for a future v1.1 / v1.2 / v1.3.
+This document lists recommended improvements to bring FBM workbooks to an S&P 500 / investor-relations level of polish.
 
-Items are grouped into three implementation waves (PR-A &rarr; PR-B &rarr; PR-C) so they can be rolled out without rewriting the standard in one go. Pick a wave, say the word, and it gets executed against `standards.md`, `apply_styles.py`, `build-template.ps1`, and `assets/template.xlsx`.
+Items are grouped into three implementation waves (PR-A &rarr; PR-B &rarr; PR-C) so they can be rolled out without rewriting the standard in one go.
 
-> **Already incorporated (not in any wave):**
-> - "Positive good, negative bad" sign convention &mdash; landed in `standards.md` &sect;4.2 on 2026-05-29. Recommendation #1 below is therefore partially done; the sign-convention half is shipped, the cost/COGS display-side wording stays as future work.
+**Status as of v1.2 (2026-05-29):**
+- **PR-A &mdash; Foundation polish:** SHIPPED in v1.2.
+- **PR-B &mdash; Output polish:** SHIPPED in v1.2 (except sparklines &mdash; deferred to PR-C).
+- **PR-C &mdash; Rigor:** QUEUED.
+
+Remaining work to regen the binary template: run `scripts/build-template.ps1` on a Windows machine with Excel installed; the script now produces the v1.2 template with every shipped item.
 
 ---
 
-## PR-A &mdash; Foundation polish
+## PR-A &mdash; Foundation polish (SHIPPED v1.2)
 
 Pure standards / template / helper changes. No new visual elements. Lowest risk, highest baseline-quality gain.
 
@@ -78,7 +82,7 @@ Set File &rarr; Info &rarr; Properties: `Title`, `Subject`, `Author`, `Company =
 
 ---
 
-## PR-B &mdash; Output polish
+## PR-B &mdash; Output polish (SHIPPED v1.2 except B5)
 
 Visible upgrades to deliverable-facing sheets (Cover, Output). Higher visual impact than PR-A; lower risk than PR-C.
 
@@ -107,8 +111,8 @@ Boxed metric tiles with big number + tiny variance below. Two new named styles:
 
 Add an example KPI card row to the Output sheet of the template.
 
-### B5. Sparklines / trend mini-charts on Output
-Any time-series row in Output gets a column with a line sparkline. One-line addition (`ws.SparklineGroups.Add(...)`), large professional impact.
+### B5. Sparklines / trend mini-charts on Output &mdash; **DEFERRED to PR-C**
+Any time-series row in Output gets a column with a line sparkline. One-line addition (`ws.SparklineGroups.Add(...)`), large professional impact. Deferred because openpyxl sparkline support is limited and we want the rule to be enforceable via both COM and openpyxl.
 
 ### B6. Hyperlinked TOC on the Cover
 Add a small TOC block to the Cover sheet:
