@@ -20,15 +20,16 @@ $ErrorActionPreference = 'Stop'
 
 # Paths
 $liveSkill   = "$env:USERPROFILE\.claude\skills\fbm-excel"
-$repoDir     = 'C:\ak\fbm-excel-skill'
-$skillPkgDir = 'C:\ak\fbm-standards'
+$repoDir     = $PSScriptRoot                      # this script lives in the repo
+$skillPkgDir = "$env:TEMP\fbm-excel-build"        # disposable staging dir for the packaged .skill
+New-Item -ItemType Directory -Force -Path $skillPkgDir | Out-Null
 $creatorDir  = 'C:\Users\Andrew.Kim\AppData\Roaming\Claude\local-agent-mode-sessions\skills-plugin\b7fb31a3-a2c4-43e6-aae2-0e3853ab3d2f\cd99ea31-8d77-40cc-ae83-6b93b89950d8\skills\skill-creator'
 $py          = "$env:LOCALAPPDATA\Programs\Python\Python312\python.exe"
 
 Write-Host "→ Mirroring live skill into repo..." -ForegroundColor Cyan
 # Remove old skill content from repo (but keep README, .gitignore, update.ps1, .git, .skill)
 Get-ChildItem $repoDir -Force | Where-Object {
-    $_.Name -notin @('.git', 'README.md', '.gitignore', 'update.ps1', 'fbm-excel.skill')
+    $_.Name -notin @('.git', 'README.md', '.gitignore', 'update.ps1', 'fbm-excel.skill', 'source')
 } | Remove-Item -Recurse -Force
 
 # Copy fresh content
