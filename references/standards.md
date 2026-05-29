@@ -1,10 +1,11 @@
 # FBM Excel Formatting Standard
 
-**Version 1.2** &middot; Owner: Andrew Kim, Operations FP&A &middot; Last updated: 2026-05-29
+**Version 1.3** &middot; Owner: Andrew Kim, Operations FP&A &middot; Last updated: 2026-05-29
 
 This document defines the visual and structural standards for all FBM Excel workbooks. The companion file `FBM-Excel-Template.xlsx` implements every rule below as pre-built cell styles, named ranges, and example sheets — copy it to start any new workbook.
 
 Changelog:
+- **v1.3 (2026-05-29)** &mdash; Header sizing dialed down (font 11 &rarr; 10, row height 30 &rarr; 18) so headers don't dominate the sheet. Freeze-pane helper now supports `label_col=None` / `''` to freeze rows only (no column lock) for wide tables where horizontal scrolling matters more.
 - **v1.2 (2026-05-29)** &mdash; PR-A foundation + PR-B output polish: color role lock, units row, row-height hygiene, sub-item indent rule, header alignment, banding, gridline rule, variance formats, edge-case formats, KPI styles, expanded Cover sheet content, hyperlinked TOC, footer metadata, workbook properties.
 - **v1.1 (2026-05-29)** &mdash; subtitle no-wrap rule, dynamic freeze panes, sign convention (&sect;4.2), pivot refresh rule (&sect;4.3).
 - **v1.0 (2026-05-21)** &mdash; initial standard.
@@ -47,7 +48,7 @@ Reviewer rule: if a cell uses a color outside this matrix, that cell will be fla
 
 - **Headers / titles:** Rockwell (per FBM brand). Falls back to Calibri Bold if Rockwell unavailable.
 - **Body:** Calibri 9
-- **Bold headers:** Calibri 11 bold
+- **Bold headers:** Calibri 10 bold
 - **KPI big number:** Rockwell 24, navy, bold
 - **KPI label:** Calibri 9, charcoal, italic
 
@@ -82,7 +83,7 @@ Reviewer rule: if a cell uses a color outside this matrix, that cell will be fla
 - **Row 4:** optional **units row** (FBM Units style: italic charcoal, centered, no wrap). Use literal labels: `$ thousands`, `$ millions`, `%`, `bps`, `units`, `# heads`, `days`. Eliminates the most common reviewer question. Skip the row entirely if the sheet doesn't have a single uniform unit.
 - **Row 5:** column headers (FBM Header style) — this is the default position, but the header row may sit lower (e.g. row 6 or 7) when extra subtitle/instruction rows are needed.
 - **Row 6+:** data (one row below the header row)
-- **Freeze panes:** computed dynamically from the actual layout — freeze one row *below* the header row and one column *right* of the rightmost label column. With the default layout (header in row 5, labels in column B only) this resolves to `C6`. If the header sits in row 7 and labels span `B:C`, freeze at `D8`. Never hardcode `C6` when the header is elsewhere.
+- **Freeze panes:** computed dynamically from the actual layout — freeze one row *below* the header row and one column *right* of the rightmost label column. With the default layout (header in row 5, labels in column B only) this resolves to `C6`. If the header sits in row 7 and labels span `B:C`, freeze at `D8`. Never hardcode `C6` when the header is elsewhere. **Rows-only mode:** for wide data sheets where you'd rather scroll columns freely than keep a label column visible, call `apply_standard_layout(..., label_col=None)` (or `''`) to anchor the freeze at column A — only the header rows lock, columns remain free.
 - **AutoFilter:** applied to the header row on Inputs and tabular sheets.
 - **Banding:** tabular sheets get a `#F7F7F7` fill on alternating data rows (e.g. rows 6, 8, 10, &hellip;). Apply via conditional format `=MOD(ROW(),2)=0` or via `apply_styles.apply_banding(ws, range)`.
 - **Sub-line-item indent:** indent via `Alignment(indent=N)`, **never** leading spaces. Sort-safe, copy-safe, and machine-readable.
@@ -97,7 +98,7 @@ Locked row heights so every sheet looks identical:
 | 2 | Title | 24 |
 | 3 | Subtitle (when used) | 16 |
 | 4 | Units (when used) | 16 |
-| 5 | Header | 30 |
+| 5 | Header | 18 |
 | 6+ | Data | 16 |
 | Row above totals | Blank breathing-room | 8 |
 
@@ -349,7 +350,7 @@ Version suffixes: `v1`, `v2`, ... or initials (`ak`) for working copies. Date in
 - [ ] Gridlines off on Cover and Output; on for Inputs/Calc/Reference
 - [ ] Banding applied on tabular sheets
 - [ ] Row 4 units row populated where the sheet has a uniform unit
-- [ ] Standard row heights applied (title 24, subtitle/units 16, header 30, data 16, blank-above-total 8)
+- [ ] Standard row heights applied (title 24, subtitle/units 16, header 18, data 16, blank-above-total 8)
 - [ ] Sub-items indented via `Alignment(indent=N)`, no leading spaces
 - [ ] Decimal places consistent within each column
 - [ ] No `#REF!`, `#DIV/0!`, `#VALUE!`, `#N/A`, `#NAME?` errors

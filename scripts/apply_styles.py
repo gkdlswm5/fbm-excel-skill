@@ -78,7 +78,7 @@ class FBM:
     HEADER_FONT_NAME = 'Rockwell'   # fallback to Calibri Bold if unavailable
     BODY_FONT_NAME   = 'Calibri'
     BODY_FONT_SIZE   = 9
-    HEADER_FONT_SIZE = 11
+    HEADER_FONT_SIZE = 10
     TITLE_FONT_SIZE  = 14
     KPI_BIG_SIZE     = 24
 
@@ -86,7 +86,7 @@ class FBM:
     ROW_HEIGHT_TITLE        = 24
     ROW_HEIGHT_SUBTITLE     = 16
     ROW_HEIGHT_UNITS        = 16
-    ROW_HEIGHT_HEADER       = 30
+    ROW_HEIGHT_HEADER       = 18
     ROW_HEIGHT_DATA         = 16
     ROW_HEIGHT_TOTAL_BREATH = 8
 
@@ -252,7 +252,7 @@ def apply_standard_layout(
     subtitle_text: str = '',
     units_text: str = '',
     units_range: str = '',
-    label_col: str = 'B',
+    label_col='B',
     with_banding: bool = True,
     band_rows: int = 40,
 ) -> None:
@@ -263,8 +263,11 @@ def apply_standard_layout(
       - Title in B2 with FBM Title style
       - Optional subtitle in B3 (italic charcoal, wrap OFF, overflow right)
       - Optional units row in row 4 (italic charcoal, centered) across units_range
-      - Standard row heights applied (24/16/16/30/16)
-      - Freeze panes computed from header_row and label_col
+      - Standard row heights applied (24/16/16/18/16)
+      - Freeze panes computed from header_row and label_col.
+        Pass label_col=None or '' to freeze rows only (anchor at column A,
+        no column lock — useful when you want to scroll freely horizontally
+        but still see the header row).
       - Optional banding on alternating data rows (rows header_row+1 .. +band_rows)
     """
     ws.column_dimensions['A'].width = 5
@@ -493,8 +496,20 @@ def set_workbook_properties(
             pass
 
 
-def _freeze_anchor(header_row: int, label_col: str) -> str:
-    """Return the freeze-pane anchor: one row below header, one col right of label_col."""
+def _freeze_anchor(header_row: int, label_col) -> str:
+    """Return the freeze-pane anchor.
+
+    Default behavior: anchor at one row below the header AND one column right
+    of label_col, so both the header row and the label column(s) stay visible
+    while scrolling.
+
+    If label_col is None or empty, anchor at column A — i.e. freeze only the
+    rows above the header, leaving all columns free to scroll. This is the
+    "headers only, no column lock" mode useful for wide data sheets where
+    horizontal scrolling matters more than keeping a label column visible.
+    """
+    if not label_col:
+        return f'A{header_row + 1}'
     n = 0
     for ch in label_col.upper():
         n = n * 26 + (ord(ch) - ord('A') + 1)
