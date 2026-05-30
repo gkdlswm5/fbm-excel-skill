@@ -19,6 +19,7 @@ This skill is **self-contained** — all resources are bundled inside the skill 
 | `assets/fbm-logo.jpeg` | Official FBM logo for headers / cover sheets |
 | `scripts/build-template.ps1` | Source script that generated the template (Windows + Excel COM, for reference) |
 | `scripts/apply_styles.py` | Cross-platform openpyxl helper to inject FBM styles into any workbook |
+| `scripts/surgical_styles.py` | Byte-level helper for **openpyxl-unsafe workbooks** (PivotTables, charts, external links, etc.) &mdash; see `references/standards.md` &sect;Appendix C |
 
 **Always read `references/standards.md` first** when this skill triggers — it's the authoritative rule set.
 
@@ -32,7 +33,9 @@ Three ways to apply, in order of preference:
 
 1. **Start from the bundled template** (best for new workbooks): copy `assets/template.xlsx` to the target location, rename per the file-naming convention (`FBM - [Subject] - [YYYY.MM.DD].xlsx`), fill in data.
 
-2. **Inject styles into an existing workbook** (best for reformatting): use `scripts/apply_styles.py` to add the 15 FBM-prefixed named styles to a target file. Then apply them to cells per the conventions.
+2. **Inject styles into an existing workbook** (best for reformatting): use `scripts/apply_styles.py` to add the FBM-prefixed named styles to a target file. Then apply them to cells per the conventions. **Not safe** if the workbook contains PivotTables, charts, external links, or custom XML &mdash; openpyxl mangles those parts on save. For those cases use path 2b.
+
+2b. **Surgical injection for openpyxl-unsafe workbooks** (PivotTables, charts, external links, `xl/metadata.xml`): use `scripts/surgical_styles.py`. Operates via byte-level XML insertion that preserves every part the script doesn't explicitly modify. Required reading: `references/standards.md` &sect;Appendix C.
 
 3. **Format manually** (best for one-off cells): use the brand color hex codes, fonts, and number-format strings directly from the standard.
 

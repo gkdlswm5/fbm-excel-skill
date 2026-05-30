@@ -1,4 +1,4 @@
-# One-shot update script for the fbm-excel skill.
+﻿# One-shot update script for the fbm-excel skill.
 #
 # Workflow:
 #   1. You edit files under C:\Users\Andrew.Kim\.claude\skills\fbm-excel\ (the live skill).

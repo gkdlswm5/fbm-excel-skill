@@ -1,10 +1,11 @@
 # FBM Excel Formatting Standard
 
-**Version 1.3** &middot; Owner: Andrew Kim, Operations FP&A &middot; Last updated: 2026-05-29
+**Version 1.4** &middot; Owner: Andrew Kim, Operations FP&A &middot; Last updated: 2026-05-29
 
 This document defines the visual and structural standards for all FBM Excel workbooks. The companion file `FBM-Excel-Template.xlsx` implements every rule below as pre-built cell styles, named ranges, and example sheets — copy it to start any new workbook.
 
 Changelog:
+- **v1.4 (2026-05-29)** &mdash; Added `scripts/surgical_styles.py` and Appendix C documenting openpyxl-unsafe workbooks (PivotTables, charts, external links). Documents the three Excel-strict XML invariants that lxml's default serialization violates: double-quoted declaration, CRLF line endings, original attribute order on root elements. Includes hand-rolled-edit gotchas (`_xlfn.` prefix, `_xlpm.` prefix, stale `calcChain.xml`, broken `definedNames`).
 - **v1.3 (2026-05-29)** &mdash; Header sizing dialed down (font 11 &rarr; 10, row height 30 &rarr; 18) so headers don't dominate the sheet. Freeze-pane helper now supports `label_col=None` / `''` to freeze rows only (no column lock) for wide tables where horizontal scrolling matters more.
 - **v1.2 (2026-05-29)** &mdash; PR-A foundation + PR-B output polish: color role lock, units row, row-height hygiene, sub-item indent rule, header alignment, banding, gridline rule, variance formats, edge-case formats, KPI styles, expanded Cover sheet content, hyperlinked TOC, footer metadata, workbook properties.
 - **v1.1 (2026-05-29)** &mdash; subtitle no-wrap rule, dynamic freeze panes, sign convention (&sect;4.2), pivot refresh rule (&sect;4.3).
@@ -382,3 +383,77 @@ To have Claude apply this standard to any Excel file:
 ## Appendix B — Future work
 
 See `references/roadmap.md` for the polish backlog. PR-A (foundation) and PR-B (output polish) shipped in v1.2. PR-C (rigor &mdash; data validation, sheet protection, edge-case formats, print preview discipline) remains queued.
+
+## Appendix C — Surgical edits (openpyxl-unsafe workbooks)
+
+`apply_styles.inject_fbm_styles(wb)` (the default Path 2 in `SKILL.md`) uses openpyxl, which mangles certain content on save. Use the surgical alternative in `scripts/surgical_styles.py` when the target workbook contains any of:
+
+- **PivotTables** (caches get rebuilt incorrectly; charts may also drop fields)
+- **Charts** with custom series formatting
+- **External links** / connections.xml
+- **Custom XML parts** (SharePoint metadata, doc inspectors)
+- **`xl/metadata.xml`** with dynamic-array markers (`cm="1"` cell attributes)
+
+### Why a separate path?
+
+Excel's parser for `styles.xml`, `workbook.xml`, and `[Content_Types].xml` is **stricter than the OOXML spec**. Three lxml defaults that the spec permits but Excel rejects:
+
+| Invariant | Excel requires | lxml default |
+|---|---|---|
+| XML declaration quotes | `<?xml version="1.0"` (double) | `'1.0'` (single) |
+| Line ending after `?>` | `\r\n` (CRLF) | `\n` (LF) |
+| Attribute order on root | What Excel originally wrote | Reordered alphabetically |
+
+Violating any one of these makes Excel discard the whole part on open. For `styles.xml`, the cascade then breaks every cell's `s="N"` reference, hitting every formatted sheet in the workbook — sometimes PivotTables too.
+
+### Use the bundled helper
+
+```python
+import zipfile, shutil
+from surgical_styles import (
+    extend_styles_bytewise, apply_cell_styles, set_tab_color,
+    resolve_sheet_paths, FBM_TAB,
+)
+
+shutil.copy2(src, work)
+with zipfile.ZipFile(work, 'r') as zin:
+    parts = {info.filename: zin.read(info.filename) for info in zin.infolist()}
+
+# 1. Byte-level inject FBM styles (preserves Excel invariants)
+parts['xl/styles.xml'], xf = extend_styles_bytewise(parts['xl/styles.xml'])
+
+# 2. Resolve sheet paths dynamically — Excel renumbers on save
+sheet_paths = resolve_sheet_paths(parts['xl/workbook.xml'],
+                                   parts['xl/_rels/workbook.xml.rels'])
+cfg_path = sheet_paths['Config']
+
+# 3. Apply styles to specific cells per your layout map
+parts[cfg_path] = apply_cell_styles(parts[cfg_path], {
+    'A1': xf['FBM Title'],
+    'A3': xf['FBM Subheader'],
+    'A8': xf['FBM Header'], 'B8': xf['FBM Header'],
+    # ...
+})
+
+# 4. Tab colors
+parts[cfg_path] = set_tab_color(parts[cfg_path], FBM_TAB['input'])
+
+# 5. Drop calcChain so Excel recomputes
+parts.pop('xl/calcChain.xml', None)
+
+# 6. Repack
+with zipfile.ZipFile(dst, 'w', zipfile.ZIP_DEFLATED) as zout:
+    for fn, data in parts.items():
+        zout.writestr(fn, data)
+```
+
+### Rules of thumb for hand-rolled edits
+
+If you must do anything beyond what the helper covers (rebuilding a sheet, adding new sheets, modifying `workbook.xml`):
+
+1. **Don't lxml-serialize the whole `styles.xml` or `workbook.xml`.** Use byte-level regex insertion into the relevant section instead.
+2. **Sheet bodies (`xl/worksheets/sheetN.xml`) are safe to lxml-roundtrip.** Excel re-parses sheet bodies leniently; you can use `etree.fromstring(...)` and `etree.tostring(...)` on them without the three-invariants trap.
+3. **Always resolve sheet paths dynamically** via `workbook.xml` + `workbook.xml.rels`. Excel may renumber `sheetN.xml` files on save (a sheet authored as `sheet15.xml` can come back as `sheet13.xml` after Excel does its own cleanup).
+4. **Future Excel function names** (LET, XLOOKUP, FILTER, SORT, TAKE, etc.) require the `_xlfn.` prefix in formula text. Parameter names in `LET`/`LAMBDA` require `_xlpm.` Without prefixes, Excel returns `#NAME?` or strips the formula entirely on repair.
+5. **`calcChain.xml`** indexes every formula cell by position. If you change formulas, drop `calcChain.xml` (and its rels + content-type override) — Excel rebuilds it on first open. Stale calcChain entries are a common cause of "found a problem" prompts.
+6. **`definedNames` referencing dropped sheets** trigger repair on open. If you delete a sheet, also strip any `definedName` element in `workbook.xml` whose body starts with `SheetName!` or contains `#REF!`.
